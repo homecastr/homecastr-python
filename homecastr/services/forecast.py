@@ -241,29 +241,45 @@ class _ByParcel:
 class ForecastService:
     """Access all Homecastr forecast endpoints.
 
+    The full geography hierarchy from finest to coarsest:
+
     Attributes
     ----------
-    by_address:
-        Forecasts by US street address (Houston metro).
+    by_unit:
+        Individual unit forecasts (condo, SFR, townhouse) — FL + Houston.
+        Uses ``condo_group`` to link units within the same building.
     by_parcel:
-        Lot/building-level forecasts by county tax parcel account number
-        (Florida statewide + Houston).
+        Lot/building-level forecasts — FL statewide + NYC (BBL) + Houston.
     by_tabblock:
-        Census tabulation block forecasts — NYC and Houston (67K tabblocks).
+        Census tabulation block — NYC (32K) + Houston (34K).
     by_tract:
-        Census tract forecasts — Florida + Houston (jurisdiction model) or
-        all US tracts via ACS nationwide model (~82K tracts).
+        Census tract — FL+Houston (jurisdiction) + all US (ACS ~82K).
     by_zcta:
-        ZIP Code Tabulation Area forecasts — ~20K ZCTAs nationwide.
+        ZIP Code Tabulation Area — ~20K ZCTAs nationwide, 6-year horizon.
+    by_zip3:
+        ZIP3 prefix areas — ~6,210 nationwide.
+    by_county:
+        US county by 5-digit FIPS — nationwide (72K+ rows).
+    by_state:
+        US state by 2-digit FIPS — all 50 states.
+    by_address:
+        Street address lookup (Houston metro).
     by_hex:
-        H3 hex cell forecasts (Houston metro, legacy compatibility).
+        H3 hex cell (Houston metro, legacy).
     """
 
     def __init__(self, http: httpx.Client) -> None:
         from .geographies import _ByTract, _ByTabblock, _ByZcta
-        self.by_address = _ByAddress(http)
+        from .aggregates import _ByUnit, _ByCounty, _ByState, _ByZip3
+        # Fine → coarse
+        self.by_unit = _ByUnit(http)
         self.by_parcel = _ByParcel(http)
         self.by_tabblock = _ByTabblock(http)
         self.by_tract = _ByTract(http)
         self.by_zcta = _ByZcta(http)
-        self.by_hex = _ByHex(http)  # legacy
+        self.by_zip3 = _ByZip3(http)
+        self.by_county = _ByCounty(http)
+        self.by_state = _ByState(http)
+        # Address / legacy
+        self.by_address = _ByAddress(http)
+        self.by_hex = _ByHex(http)  # legacy Houston H3
