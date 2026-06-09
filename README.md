@@ -16,8 +16,10 @@ The Homecastr Python SDK wraps the [Homecastr API](https://www.homecastr.com) an
 - [Getting Started](#getting-started)
 - [Services](#services)
   - [Forecast by Address](#forecast-by-address)
-  - [Forecast by Neighborhood (H3)](#forecast-by-neighborhood-h3)
   - [Forecast by Parcel](#forecast-by-parcel)
+  - [Forecast by Tabblock](#forecast-by-tabblock)
+  - [Forecast by Tract](#forecast-by-tract)
+  - [Forecast by ZCTA](#forecast-by-zcta)
   - [Account & Usage](#account--usage)
 - [Cookbook](#cookbook)
 
@@ -25,16 +27,17 @@ The Homecastr Python SDK wraps the [Homecastr API](https://www.homecastr.com) an
 
 ## Data Overview
 
-Homecastr produces **Bayesian ensemble forecasts** trained on 70M+ US residential transactions. Every forecast returns a full probability distribution (P10/P25/P50/P75/P90) across multiple time horizons — not a single estimate.
+Homecastr produces **Bayesian ensemble forecasts** trained on 80M+ US residential transactions. Every forecast returns a full probability distribution (P10/P25/P50/P75/P90) across multiple time horizons — not a single estimate.
 
-| Coverage | Detail |
-|---|---|
-| **Geography** | Any US street address · H3 hex cells (resolution 8) · County tax parcels |
-| **Horizons** | 1–5 year forecasts (12–60 month horizons) |
-| **Output** | P10 · P25 · P50 · P75 · P90 probability bands + fan chart |
-| **Pro forma** | Cap rate · NOI · DSCR · Monthly rent · Breakeven occupancy |
-| **Reliability** | Per-prediction confidence score based on training support and model error |
-| **Jurisdictions** | Houston · NYC · SF · Cook County · Seattle · Philadelphia · Florida · Texas · and more |
+| Level | Coverage | Detail |
+|---|---|---|
+| **Parcel / Building** | Florida statewide + Houston metro | 46M+ parcel rows, 38M+ building rows |
+| **Tabblock** | NYC (32K) + Houston (34K) | ~67K census tabulation blocks |
+| **Tract** | Florida + Houston (jurisdiction model) + all US (ACS model) | ~82K tracts nationwide |
+| **ZCTA / ZIP** | ~20K ZCTAs nationwide | ACS model, 6-year horizon (0–72 months) |
+| **Horizons** | 1–6 year forecasts (12–72 month horizons) | |
+| **Output** | P10 · P25 · P50 · P75 · P90 probability bands + fan chart | |
+| **Pro forma** | Cap rate · NOI · DSCR · Monthly rent · Growth % · Growth $ | |
 
 ---
 
@@ -114,7 +117,69 @@ print(df[["address", "current_value", "p10", "p50", "p90", "appreciation_pct"]])
 
 ---
 
-### Forecast by Neighborhood (H3)
+### Forecast by Tabblock
+
+Sub-neighborhood forecasts by **15-digit Census GEOID20**. NYC (32K tabblocks) and Houston (34K tabblocks).
+
+```python
+# Manhattan / NYC
+result = client.forecast.by_tabblock.retrieve("360050002000001")
+print(result["current_value"])
+print(result["growth_pct"])
+print(result["fan_chart"])
+
+# Houston
+result = client.forecast.by_tabblock.retrieve("480717106001022")
+
+# Bulk → DataFrame
+tabblocks = ["360050002000001", "360050002001000", "480717106001022"]
+df = client.forecast.by_tabblock.retrieve_many(tabblocks)
+print(df[["geoid", "jurisdiction", "current_value", "p50", "growth_pct"]])
+```
+
+---
+
+### Forecast by Tract
+
+Neighborhood-level forecasts by **11-digit Census GEOID20**. Florida + Houston use a jurisdiction-specific model; all ~82K US tracts have coverage via the ACS nationwide model.
+
+```python
+# Houston tract
+result = client.forecast.by_tract.retrieve("48201231400")
+print(result["data_model"])    # "jurisdiction" or "acs_nationwide"
+
+# Miami tract (ACS nationwide model)
+result = client.forecast.by_tract.retrieve("12086000100")
+
+# Bulk → DataFrame
+tracts = ["48201231400", "36061023100", "12086000100"]
+df = client.forecast.by_tract.retrieve_many(tracts)
+print(df[["geoid", "jurisdiction", "data_model", "current_value", "growth_pct"]])
+```
+
+---
+
+### Forecast by ZCTA
+
+ZIP-level forecasts by 5-digit ZCTA. ~20K ZCTAs nationwide with 6-year horizon (0–72 months).
+
+```python
+result = client.forecast.by_zcta.retrieve("77056")   # Houston Galleria
+result = client.forecast.by_zcta.retrieve("10001")   # Manhattan
+result = client.forecast.by_zcta.retrieve("94110")   # SF Mission
+result = client.forecast.by_zcta.retrieve("33139")   # Miami Beach
+result = client.forecast.by_zcta.retrieve("60614")   # Chicago Lincoln Park
+result = client.forecast.by_zcta.retrieve("98102")   # Seattle Capitol Hill
+
+# Bulk → DataFrame (12m and 60m columns)
+zips = ["77056", "10001", "94110", "33139", "60614", "98102"]
+df = client.forecast.by_zcta.retrieve_many(zips)
+print(df[["zcta", "current_value", "p50_12m", "p50_60m"]])
+```
+
+---
+
+### Forecast by Neighborhood (H3, legacy)
 
 Query neighborhood-level metrics using [H3 hex cell IDs](https://h3geo.org/) at resolution 8. Includes proforma underwriting metrics aggregated across all properties in the cell.
 

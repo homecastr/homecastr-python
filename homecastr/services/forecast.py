@@ -243,14 +243,26 @@ class ForecastService:
     Attributes
     ----------
     by_address:
-        Forecasts by US street address.
-    by_hex:
-        Neighborhood-level forecasts by H3 hex cell ID.
+        Forecasts by US street address (Houston metro).
     by_parcel:
-        Lot-level forecasts by county tax parcel account number.
+        Lot/building-level forecasts by county tax parcel account number
+        (Florida statewide + Houston).
+    by_tabblock:
+        Census tabulation block forecasts — NYC and Houston (67K tabblocks).
+    by_tract:
+        Census tract forecasts — Florida + Houston (jurisdiction model) or
+        all US tracts via ACS nationwide model (~82K tracts).
+    by_zcta:
+        ZIP Code Tabulation Area forecasts — ~20K ZCTAs nationwide.
+    by_hex:
+        H3 hex cell forecasts (Houston metro, legacy compatibility).
     """
 
     def __init__(self, http: httpx.Client) -> None:
+        from .geographies import _ByTract, _ByTabblock, _ByZcta
         self.by_address = _ByAddress(http)
-        self.by_hex = _ByHex(http)
         self.by_parcel = _ByParcel(http)
+        self.by_tabblock = _ByTabblock(http)
+        self.by_tract = _ByTract(http)
+        self.by_zcta = _ByZcta(http)
+        self.by_hex = _ByHex(http)  # legacy
