@@ -197,7 +197,8 @@ class _ByParcel:
         acct:
             County tax parcel account number. Format varies by jurisdiction:
             10-digit for HCAD Houston (e.g. ``"0420430060006"``),
-            dash-separated for Florida (e.g. ``"01-4234-001-0010"``).
+            dash-separated for Florida (e.g. ``"00404328020003500"``),
+            BBL for NYC (e.g. ``"1005390013"`` = Manhattan block 539 lot 13).
 
         Returns
         -------
