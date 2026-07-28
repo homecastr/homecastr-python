@@ -1,12 +1,11 @@
 # homecastr-python
 
-[![PyPI](https://img.shields.io/pypi/v/homecastr)](https://pypi.org/project/homecastr/)
-[![PyPI Downloads](https://img.shields.io/pypi/dm/homecastr)](https://pypi.org/project/homecastr/)
+[![GitHub release](https://img.shields.io/github/v/release/homecastr/homecastr-python)](https://github.com/homecastr/homecastr-python/releases)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
-**Probabilistic home value forecasts for any US address — in one line of Python.**
+**Probabilistic home value forecasts for any US address, in one line of Python.**
 
-The Homecastr Python SDK wraps the [Homecastr API](https://www.homecastr.com) and lets you pull property-level, neighborhood-level, and market-level forecasts, run proforma analysis, and build quantitative models on top of the full probability distribution — not just a point estimate.
+The Homecastr Python SDK supports the [Homecastr](https://www.homecastr.com) and [Worldcastr](https://worldcastr.com) API surfaces. It lets you pull property-level, neighborhood-level, and market-level forecasts, run proforma analysis, and build quantitative models on top of the full probability distribution, not just a point estimate.
 
 ---
 
@@ -27,7 +26,7 @@ The Homecastr Python SDK wraps the [Homecastr API](https://www.homecastr.com) an
 
 ## Data Overview
 
-Homecastr produces **Bayesian ensemble forecasts** trained on 80M+ US residential transactions. Every forecast returns a full probability distribution (P10/P25/P50/P75/P90) across multiple time horizons — not a single estimate.
+Homecastr produces **Bayesian ensemble forecasts** trained on 80M+ US residential transactions. Every forecast returns a full probability distribution (P10/P25/P50/P75/P90) across multiple time horizons, not a single estimate.
 
 | Level | Coverage | Detail |
 |---|---|---|
@@ -43,7 +42,7 @@ Homecastr produces **Bayesian ensemble forecasts** trained on 80M+ US residentia
 
 ## Getting Started
 
-### Step 1 — Get an API Key
+### Step 1: Get an API Key
 
 ```python
 from homecastr import HomecastrClient
@@ -56,13 +55,13 @@ print(result["key"])  # hc_xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx
 
 Or sign up at [homecastr.com](https://www.homecastr.com).
 
-### Step 2 — Install
+### Step 2: Install
 
 ```bash
-pip install -U homecastr
+pip install -U "homecastr @ git+https://github.com/homecastr/homecastr-python.git@v0.2.0"
 ```
 
-### Step 3 — Use
+### Step 3: Use
 
 ```python
 import os
@@ -71,6 +70,14 @@ from homecastr import HomecastrClient
 api_key = os.getenv("HOMECASTR_API_KEY")
 client = HomecastrClient(api_key)
 ```
+
+Both public domains use the same API contract and credentials. Homecastr remains the default. To use Worldcastr explicitly:
+
+```python
+client = HomecastrClient(base_url="https://worldcastr.com")
+```
+
+You can also set `WORLDCASTR_API_KEY` and `WORLDCASTR_API_URL`. The corresponding `HOMECASTR_*` variables take precedence when both are present.
 
 ---
 
@@ -95,7 +102,7 @@ print(result["appreciation_pct"])       # 12.4
 print(result["reliability"])            # 0.87  (model confidence 0–1)
 ```
 
-**Bulk retrieval — returns a DataFrame:**
+**Bulk retrieval returns a DataFrame:**
 
 ```python
 addresses = [
@@ -184,7 +191,7 @@ print(df[["zcta", "current_value", "p50_12m", "p50_60m"]])
 Query neighborhood-level metrics using [H3 hex cell IDs](https://h3geo.org/) at resolution 8. Includes proforma underwriting metrics aggregated across all properties in the cell.
 
 ```python
-# Single hex cell — Midtown Houston
+# Single hex cell: Midtown Houston
 result = client.forecast.by_hex.retrieve("882a100c65fffff", year=2027)
 
 print(result["location"])                       # "Midtown Houston"
@@ -265,13 +272,13 @@ print(info["by_endpoint"])
 
 ## Cookbook
 
-We maintain a [Homecastr Cookbook](https://github.com/homecastr/homecastr-cookbook) with ready-to-run notebooks for common analysis workflows:
+We maintain a [Homecastr Cookbook](https://github.com/homecastr/homecastr-cookbook) with ready-to-run notebooks for common analyses:
 
-- **Getting Started** — API keys, first forecast, data exploration
-- **Address Forecasts** — Bulk retrieval, fan chart visualization, uncertainty quantification
-- **Neighborhood Analysis** — H3 heat maps, cross-market comparison, opportunity ranking
-- **Investment Analysis** — Proforma underwriting, DSCR screening, cap rate distributions
-- **Market Comparison** — Houston vs Austin vs SF: 5-year outlook
+- **Getting Started**: API keys, first forecast, data exploration
+- **Address Forecasts**: Bulk retrieval, fan chart visualization, uncertainty quantification
+- **Neighborhood Analysis**: H3 heat maps, cross-market comparison, opportunity ranking
+- **Investment Analysis**: Proforma underwriting, DSCR screening, cap rate distributions
+- **Market Comparison**: Houston vs Austin vs SF, 5-year outlook
 
 ---
 
