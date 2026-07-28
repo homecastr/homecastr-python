@@ -1,6 +1,6 @@
 """Basic tests for HomecastrClient."""
+
 import pytest
-import httpx
 from pytest_httpx import HTTPXMock
 
 from homecastr import HomecastrClient
@@ -19,6 +19,30 @@ def test_ping(httpx_mock: HTTPXMock):
     c = HomecastrClient("hc_test_key", base_url="https://mock.homecastr.com")
     result = c.ping()
     assert result["status"] == "ok"
+
+
+def test_worldcastr_environment_aliases(monkeypatch):
+    monkeypatch.delenv("HOMECASTR_API_KEY", raising=False)
+    monkeypatch.delenv("HOMECASTR_API_URL", raising=False)
+    monkeypatch.setenv("WORLDCASTR_API_KEY", "hc_worldcastr_test")
+    monkeypatch.setenv("WORLDCASTR_API_URL", "https://worldcastr.com/")
+
+    c = HomecastrClient()
+
+    assert c._api_key == "hc_worldcastr_test"
+    assert c._base_url == "https://worldcastr.com"
+
+
+def test_homecastr_environment_takes_precedence(monkeypatch):
+    monkeypatch.setenv("HOMECASTR_API_KEY", "hc_homecastr_test")
+    monkeypatch.setenv("HOMECASTR_API_URL", "https://www.homecastr.com/")
+    monkeypatch.setenv("WORLDCASTR_API_KEY", "hc_worldcastr_test")
+    monkeypatch.setenv("WORLDCASTR_API_URL", "https://worldcastr.com/")
+
+    c = HomecastrClient()
+
+    assert c._api_key == "hc_homecastr_test"
+    assert c._base_url == "https://www.homecastr.com"
 
 
 def test_forecast_by_address(httpx_mock: HTTPXMock):

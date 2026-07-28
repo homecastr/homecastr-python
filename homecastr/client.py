@@ -6,23 +6,25 @@ from typing import Optional
 import httpx
 
 from .services.forecast import ForecastService
-from .services.usage import UsageService
 from .services.keys import KeysService
+from .services.usage import UsageService
 
 _DEFAULT_BASE_URL = "https://www.homecastr.com"
 _DEFAULT_TIMEOUT = 30.0
 
 
 class HomecastrClient:
-    """Entry point for the Homecastr API.
+    """Entry point for the Homecastr and Worldcastr API surfaces.
 
     Parameters
     ----------
     api_key:
-        Your Homecastr API key (``hc_...``). Defaults to the
-        ``HOMECASTR_API_KEY`` environment variable.
+        Your API key (``hc_...``). Defaults to ``HOMECASTR_API_KEY``,
+        then ``WORLDCASTR_API_KEY``.
     base_url:
-        Override the default API base URL.
+        Override the API base URL. If omitted, ``HOMECASTR_API_URL``
+        takes precedence over ``WORLDCASTR_API_URL``, followed by the
+        Homecastr production URL.
     timeout:
         HTTP request timeout in seconds (default 30).
 
@@ -38,11 +40,22 @@ class HomecastrClient:
         self,
         api_key: Optional[str] = None,
         *,
-        base_url: str = _DEFAULT_BASE_URL,
+        base_url: Optional[str] = None,
         timeout: float = _DEFAULT_TIMEOUT,
     ) -> None:
-        self._api_key = api_key or os.environ.get("HOMECASTR_API_KEY", "hc_demo_public_readonly")
-        self._base_url = base_url.rstrip("/")
+        self._api_key = (
+            api_key
+            or os.environ.get("HOMECASTR_API_KEY")
+            or os.environ.get("WORLDCASTR_API_KEY")
+            or "hc_demo_public_readonly"
+        )
+        resolved_base_url = (
+            base_url
+            or os.environ.get("HOMECASTR_API_URL")
+            or os.environ.get("WORLDCASTR_API_URL")
+            or _DEFAULT_BASE_URL
+        )
+        self._base_url = resolved_base_url.rstrip("/")
         self._http = httpx.Client(
             base_url=self._base_url,
             headers={
@@ -66,7 +79,7 @@ class HomecastrClient:
         return self.usage.retrieve()
 
     def ping(self) -> dict:
-        """Health-check the Homecastr API."""
+        """Health-check the configured API surface."""
         r = self._http.get("/api/ping")
         r.raise_for_status()
         return r.json()
@@ -81,4 +94,4 @@ def _sdk_version() -> str:
         from importlib.metadata import version
         return version("homecastr")
     except Exception:
-        return "0.1.0"
+        return "0.2.0"
